@@ -1,0 +1,153 @@
+{
+  "title": "DORA Metrics",
+  "uid": "dora-dashboard",
+  "tags": ["dora", "cicd"],
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Deployment Frequency",
+      "description": "How often deployments happen. Elite = multiple/day, High = daily, Medium = weekly, Low = monthly",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}[30d])",
+          "legendFormat": "Deployments (30d)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 1 },
+              { "color": "green", "value": 7 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Change Failure Rate",
+      "description": "% of deployments causing failures. Elite/High = 0-15%, Medium = 16-30%, Low = 46-60%",
+      "type": "gauge",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"failure\", workflow_name=~\".*[Dd]eploy.*\"}[30d]) / increase(github_actions_workflow_run_duration_seconds_count{workflow_name=~\".*[Dd]eploy.*\"}[30d])) * 100",
+          "legendFormat": "CFR %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 15 },
+              { "color": "red", "value": 30 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Lead Time for Changes",
+      "description": "Avg time from workflow start to completion. Elite < 1h, High < 1d",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg(github_actions_workflow_run_duration_seconds{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}) / 60",
+          "legendFormat": "Avg Lead Time (min)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 1440 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Service Uptime (MTTR Proxy)",
+      "description": "Time endpoint has been continuously up. Longer = better MTTR.",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg_over_time(probe_success{job=\"blackbox\"}[7d]) * 100",
+          "legendFormat": "7d Uptime %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Deployment Frequency Trend (30d)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}[1d])",
+          "legendFormat": "Daily Deployments"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Endpoint Availability Trend (30d)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox\"}",
+          "legendFormat": "Probe Success (1=up, 0=down)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

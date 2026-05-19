@@ -1,0 +1,33 @@
+groups:
+  - name: cicd
+    rules:
+
+      - alert: HighChangeFailureRate
+        expr: |
+          (
+            increase(deployments_failed_total[30d])
+            /
+            increase(deployments_total[30d])
+          ) * 100 > 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Change Failure Rate exceeds SLO threshold on {{ $labels.instance }}"
+          description: "CFR is {{ $value | printf \"%.1f\" }}% over the last 30 days. SLO threshold is 15%. Too many deployments are causing production failures."
+          value: "{{ $value | printf \"%.1f\" }}%"
+          dashboard_url: "http://grafana:3000/d/dora"
+          runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/high-cfr.md"
+
+      - alert: HighMTTR
+        expr: |
+          avg(incident_resolution_duration_minutes) > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mean Time to Restore exceeds SLO threshold"
+          description: "Average MTTR is {{ $value | printf \"%.0f\" }} minutes. SLO threshold is 60 minutes. Incidents are taking too long to resolve."
+          value: "{{ $value | printf \"%.0f\" }} minutes"
+          dashboard_url: "http://grafana:3000/d/dora"
+          runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/high-mttr.md"

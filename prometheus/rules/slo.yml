@@ -1,0 +1,42 @@
+groups:
+  - name: slo
+    rules:
+      - alert: FastBurnRate
+        expr: |
+          (
+            1 - (
+              sum(rate(http_requests_total{status=~"2.."}[1h]))
+              /
+              sum(rate(http_requests_total[1h]))
+            )
+          ) / 0.005 > 14.4
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Fast burn rate detected for {{ $labels.job }}"
+          description: "The burn rate for {{ $labels.job }} has exceeded the threshold of 14.4 for the past hour, indicating a potential SLO violation."
+          value: "{{ $value | printf \"%.2f\" }}"
+          dashboard_url: "http://grafana:3000/d/slo-dashboard?var-job={{ $labels.job }}"
+          runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/fast-burn.md"
+      
+      - alert: SlowBurnRate
+        expr: |
+          (
+            1 - (
+              sum(rate(http_requests_total{status=~"2.."}[6h]))
+              /
+              sum(rate(http_requests_total[6h]))
+            )
+          ) / 0.005 > 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow burn rate detected for {{ $labels.job }}"
+          description: "The burn rate for {{ $labels.job }} has exceeded the threshold of 5 for the past hour, indicating a potential SLO violation if the trend continues."
+
+          value: "{{ $value | printf \"%.2f\" }}"
+          dashboard_url: "http://grafana:3000/d/slo-dashboard?var-job={{ $labels.job }}"
+          runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/slow-burn.md"
+

@@ -1,0 +1,217 @@
+{
+  "title": "SLO & Error Budget",
+  "uid": "slo-dashboard",
+  "tags": ["slo", "reliability"],
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Availability SLI (selected range)",
+      "description": "% of probes returning success over the selected time range. SLO target: 99.5%",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "avg_over_time(probe_success{job=\"blackbox\"}[$__range]) * 100",
+          "legendFormat": "Availability %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 99 },
+              { "color": "green", "value": 99.5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Error Budget Remaining",
+      "description": "Budget consumed = how much of the 0.5% error budget has been spent. SLO: 99.5% over 30 days = 216 min budget",
+      "type": "bargauge",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "clamp_min(clamp_max((1 - (1 - avg_over_time(probe_success{job=\"blackbox\"}[$__range])) / 0.005) * 100, 100), 0)",
+          "legendFormat": "Budget Remaining %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 25 },
+              { "color": "green", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Response Time (Total)",
+      "description": "Sum of all probe phases — DNS + connect + TLS + processing + transfer",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(probe_http_duration_seconds{job=\"blackbox\"}) * 1000",
+          "legendFormat": "Response Time ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 300 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Current Status",
+      "description": "Live probe result — 1 = UP, 0 = DOWN",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox\"}",
+          "legendFormat": "Probe Status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "DOWN", "color": "red" },
+                "1": { "text": "UP", "color": "green" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Fast Burn Rate (1h window) — Alert threshold: 14.4x",
+      "description": "Burn rate > 14.4 means monthly error budget exhausted in ~2 days. Triggers SloBurnRateFast alert.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(1 - avg_over_time(probe_success{job=\"blackbox\"}[1h])) / 0.005",
+          "legendFormat": "Burn Rate (1h)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Slow Burn Rate (6h window) — Alert threshold: 5x",
+      "description": "Burn rate > 5 over 6h means monthly budget exhausted in ~6 days. Triggers SloBurnRateSlow alert.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(1 - avg_over_time(probe_success{job=\"blackbox\"}[6h])) / 0.005",
+          "legendFormat": "Burn Rate (6h)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Probe Success History",
+      "description": "1 = endpoint up, 0 = endpoint down. Each drop contributes to error budget consumption.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox\"}",
+          "legendFormat": "Probe Success"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Response Time by Phase",
+      "description": "Breakdown of where time is spent: DNS resolution, TCP connect, TLS handshake, server processing, data transfer",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_http_duration_seconds{job=\"blackbox\"} * 1000",
+          "legendFormat": "{{ phase }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    }
+  ]
+}

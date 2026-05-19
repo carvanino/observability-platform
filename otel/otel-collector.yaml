@@ -1,0 +1,42 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  file_log:
+    include:
+      - /var/lib/docker/containers/*/*.log
+    include_file_path: true
+    start_at: end
+
+processors:
+  batch:
+    timeout: 5s
+  resource:
+    attributes:
+      - action: insert
+        key: service.name
+        value: docker-logs
+
+exporters:
+  otlp_grpc/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlp_http/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp_grpc/tempo]
+    logs:
+      receivers: [file_log]
+      processors: [resource, batch]
+      exporters: [otlp_http/loki]

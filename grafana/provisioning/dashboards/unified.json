@@ -1,0 +1,201 @@
+{
+  "title": "Unified Observability",
+  "uid": "unified-dashboard",
+  "tags": ["unified", "observability"],
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Endpoint Health",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox\"}",
+          "legendFormat": "Status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Response Time",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(probe_http_duration_seconds{job=\"blackbox\"}) * 1000",
+          "legendFormat": "ms"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 300 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "CPU Usage",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 80 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Memory Usage",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+          "legendFormat": "Memory %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 80 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Burn Rate",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(1 - avg_over_time(probe_success{job=\"blackbox\"}[1h])) / 0.005",
+          "legendFormat": "Burn Rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Probe Success Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox\"}",
+          "legendFormat": "Endpoint Up/Down"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Response Time Breakdown",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "probe_http_duration_seconds{job=\"blackbox\"} * 1000",
+          "legendFormat": "{{ phase }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Application Logs",
+      "type": "logs",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
+      "datasource": "Loki",
+      "targets": [
+        {
+          "expr": "{service_name=\"clinsight\"}",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 9,
+      "title": "Traces",
+      "type": "traces",
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 10 },
+      "datasource": "Tempo",
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ duration > 200ms }",
+          "legendFormat": ""
+        }
+      ]
+    }
+  ]
+}
