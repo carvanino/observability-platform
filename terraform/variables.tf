@@ -39,3 +39,9 @@ variable "tempo_port" {
   type        = number
   default     = 3200
 }
+
+variable "github_token" {
+  description = "GitHub Personal Access Token for DORA metrics"
+  type        = string
+  sensitive   = true
+}

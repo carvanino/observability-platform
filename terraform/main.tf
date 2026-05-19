@@ -245,6 +245,28 @@ resource "docker_container" "blackbox" {
   }
 }
 
+# GitHub Actions Exporter (DORA metrics)
+resource "docker_container" "github_actions_exporter" {
+  name    = "github-actions-exporter"
+  image   = "ghcr.io/cpanato/github-actions-exporter:latest"
+  restart = "unless-stopped"
+
+  networks_advanced {
+    name = docker_network.monitoring.name
+  }
+
+  ports {
+    internal = 9999
+    external = 9999
+  }
+
+  env = [
+    "GITHUB_TOKEN=${var.github_token}",
+    "GITHUB_OWNER=hngprojects",
+    "GITHUB_REPOS=clinical-api"
+  ]
+}
+
 #  OpenTelemetry Collector
 resource "docker_container" "otel_collector" {
   name    = "otel-collector"

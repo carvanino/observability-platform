@@ -25,6 +25,10 @@ scrape_configs:
         replacement: blackbox-exporter:9115
         action: replace
 
+  - job_name: 'github-actions'
+    static_configs:
+      - targets: ['github-actions-exporter:9999']
+
 # Push Relationships 
 alerting:
   alertmanagers:
