@@ -44,4 +44,23 @@ variable "github_token" {
   description = "GitHub Personal Access Token for DORA metrics"
   type        = string
   sensitive   = true
+  default     = ""
+}
+
+variable "app_server_host" {
+  description = "App server IP address"
+  type        = string
+  default     = "16.171.47.26"
+}
+
+variable "app_server_user" {
+  description = "App server SSH user"
+  type        = string
+  default     = "chima_nigerian"
+}
+
+variable "app_server_ssh_key" {
+  description = "Path to SSH private key for app server"
+  type        = string
+  default     = "~/.ssh/hng-clinical-chima"
 }
