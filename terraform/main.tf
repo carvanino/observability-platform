@@ -246,9 +246,18 @@ resource "docker_container" "blackbox" {
 }
 
 # GitHub Actions Exporter (DORA metrics)
+resource "docker_image" "github_exporter" {
+  name         = "github-actions-exporter:latest"
+  keep_locally = true
+
+  build {
+    context = "${local.base_path}/github-exporter"
+  }
+}
+
 resource "docker_container" "github_actions_exporter" {
   name    = "github-actions-exporter"
-  image   = "ghcr.io/cpanato/github-actions-exporter:latest"
+  image   = docker_image.github_exporter.image_id
   restart = "unless-stopped"
 
   networks_advanced {
@@ -261,9 +270,9 @@ resource "docker_container" "github_actions_exporter" {
   }
 
   env = [
-    "GITHUB_TOKEN=${var.github_token}",
     "GITHUB_OWNER=hngprojects",
-    "GITHUB_REPOS=clinical-api"
+    "GITHUB_REPO=clinical-api",
+    "POLL_INTERVAL=300"
   ]
 }
 

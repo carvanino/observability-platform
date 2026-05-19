@@ -8,24 +8,25 @@
     {
       "id": 1,
       "title": "Deployment Frequency",
-      "description": "How often deployments happen. Elite = multiple/day, High = daily, Medium = weekly, Low = monthly",
+      "description": "Deployments per day over last 30 days. Elite ≥ 1/day, High = weekly, Medium = monthly, Low = < monthly",
       "type": "stat",
       "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}[30d])",
-          "legendFormat": "Deployments (30d)"
+          "expr": "dora_deployment_frequency_daily",
+          "legendFormat": "Deployments/day"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "decimals": 2,
           "thresholds": {
             "steps": [
               { "color": "red", "value": 0 },
-              { "color": "yellow", "value": 1 },
-              { "color": "green", "value": 7 }
+              { "color": "yellow", "value": 0.14 },
+              { "color": "green", "value": 1 }
             ]
           }
         }
@@ -34,13 +35,13 @@
     {
       "id": 2,
       "title": "Change Failure Rate",
-      "description": "% of deployments causing failures. Elite/High = 0-15%, Medium = 16-30%, Low = 46-60%",
+      "description": "% of deployments causing failures. Elite/High < 15%, Medium 16-30%, Low > 45%",
       "type": "gauge",
       "gridPos": { "x": 6, "y": 0, "w": 6, "h": 8 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "(increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"failure\", workflow_name=~\".*[Dd]eploy.*\"}[30d]) / increase(github_actions_workflow_run_duration_seconds_count{workflow_name=~\".*[Dd]eploy.*\"}[30d])) * 100",
+          "expr": "dora_change_failure_rate_percent",
           "legendFormat": "CFR %"
         }
       ],
@@ -62,19 +63,20 @@
     {
       "id": 3,
       "title": "Lead Time for Changes",
-      "description": "Avg time from workflow start to completion. Elite < 1h, High < 1d",
+      "description": "Avg time from workflow trigger to completion. Elite < 1h, High < 1d, Medium < 1w",
       "type": "stat",
       "gridPos": { "x": 12, "y": 0, "w": 6, "h": 8 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "avg(github_actions_workflow_run_duration_seconds{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}) / 60",
-          "legendFormat": "Avg Lead Time (min)"
+          "expr": "dora_lead_time_seconds / 60",
+          "legendFormat": "Lead Time (min)"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "m",
+          "decimals": 1,
           "thresholds": {
             "steps": [
               { "color": "green", "value": 0 },
@@ -87,25 +89,26 @@
     },
     {
       "id": 4,
-      "title": "Service Uptime (MTTR Proxy)",
-      "description": "Time endpoint has been continuously up. Longer = better MTTR.",
+      "title": "Mean Time to Restore",
+      "description": "Avg time failed workflows take to complete. Proxy for MTTR. Elite < 1h, High < 1d",
       "type": "stat",
       "gridPos": { "x": 18, "y": 0, "w": 6, "h": 8 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "avg_over_time(probe_success{job=\"blackbox\"}[7d]) * 100",
-          "legendFormat": "7d Uptime %"
+          "expr": "dora_mttr_seconds / 60",
+          "legendFormat": "MTTR (min)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
+          "unit": "m",
+          "decimals": 1,
           "thresholds": {
             "steps": [
-              { "color": "red", "value": 0 },
-              { "color": "yellow", "value": 99 },
-              { "color": "green", "value": 99.5 }
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 1440 }
             ]
           }
         }
@@ -113,41 +116,57 @@
     },
     {
       "id": 5,
-      "title": "Deployment Frequency Trend (30d)",
-      "type": "timeseries",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "title": "Total Deployments (30 days)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "increase(github_actions_workflow_run_duration_seconds_count{conclusion=\"success\", workflow_name=~\".*[Dd]eploy.*\"}[1d])",
-          "legendFormat": "Daily Deployments"
+          "expr": "dora_deployments_total",
+          "legendFormat": "Total"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
     },
     {
       "id": 6,
-      "title": "Endpoint Availability Trend (30d)",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "title": "Failed Deployments (30 days)",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 8, "w": 6, "h": 6 },
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "probe_success{job=\"blackbox\"}",
-          "legendFormat": "Probe Success (1=up, 0=down)"
+          "expr": "dora_deployments_failed_total",
+          "legendFormat": "Failed"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "min": 0,
-          "max": 1,
+          "unit": "short",
           "thresholds": {
             "steps": [
-              { "color": "red", "value": 0 },
-              { "color": "green", "value": 1 }
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 3 },
+              { "color": "red", "value": 5 }
             ]
           }
         }
       }
+    },
+    {
+      "id": 7,
+      "title": "Deployment Frequency Trend",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 6 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "dora_deployment_frequency_daily",
+          "legendFormat": "Deployments/day"
+        }
+      ]
     }
   ]
 }
