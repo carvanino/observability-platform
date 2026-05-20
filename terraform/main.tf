@@ -38,9 +38,42 @@ resource "null_resource" "node_exporter_app_server" {
       "tar -xzf ~/node_exporter.tar.gz -C ~/",
       "mv -f ~/node_exporter-1.7.0.linux-amd64/node_exporter ~/node_exporter",
       "rm -rf ~/node_exporter.tar.gz ~/node_exporter-1.7.0.linux-amd64",
-      "nohup ~/node_exporter --web.listen-address=':9100' > ~/node_exporter.log 2>&1 &",
+      "nohup ~/node_exporter --web.listen-address='127.0.0.1:9100' > ~/node_exporter.log 2>&1 &",
       "sleep 3 && curl -s http://localhost:9100/metrics | head -3"
     ]
+  }
+}
+
+# ── SSH Tunnel container (app server node exporter) ────────────────
+resource "docker_image" "ssh_tunnel" {
+  name         = "ssh-tunnel:latest"
+  keep_locally = true
+
+  build {
+    context = "${local.base_path}/ssh-tunnel"
+  }
+}
+
+resource "docker_container" "ssh_tunnel" {
+  name    = "app-server-tunnel"
+  image   = docker_image.ssh_tunnel.image_id
+  restart = "unless-stopped"
+
+  depends_on = [null_resource.node_exporter_app_server]
+
+  networks_advanced {
+    name = docker_network.monitoring.name
+  }
+
+  env = [
+    "SSH_USER=${var.app_server_user}",
+    "SSH_HOST=${var.app_server_host}"
+  ]
+
+  volumes {
+    host_path      = var.app_server_ssh_key
+    container_path = "/root/.ssh/id_rsa"
+    read_only      = true
   }
 }
 

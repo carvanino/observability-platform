@@ -13,7 +13,7 @@ scrape_configs:
 
   - job_name: 'node-exporter-app-server'
     static_configs:
-      - targets: ['16.171.47.26:9100']
+      - targets: ['app-server-tunnel:9100']
         labels:
           instance: 'app-server'
 
