@@ -1,0 +1,13 @@
+{
+  "title": "Tempo Trace Viewer",
+  "type": "traces",
+  "datasource": "Tempo",
+  "targets": [
+    {
+      "queryType": "traceql",
+      "query": "{ .service.name = \"clinsight\" }",
+      "refId": "A"
+    }
+  ],
+  "description": "Search and view distributed traces from the clinsight API"
+}
