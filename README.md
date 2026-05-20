@@ -326,7 +326,7 @@ terraform destroy -var-file="terraform.tfvars" -auto-approve
 
 ## Blog Post
 
-[Link to be added after publication]
+https://medium.com/@akinolatofunmi/monitoring-with-grafana-bfeffb568861
 
 ---
 
