@@ -64,3 +64,31 @@ variable "app_server_ssh_key" {
   type        = string
   default     = "~/.ssh/hng-clinical-chima"
 }
+
+variable "smtp_host" {
+  description = "SMTP server hostname for email alerting"
+  type        = string
+  default     = "smtp.gmail.com"
+}
+
+variable "smtp_port" {
+  description = "SMTP server port"
+  type        = number
+  default     = 587
+}
+
+variable "smtp_from" {
+  description = "From email address for alert emails"
+  type        = string
+}
+
+variable "smtp_auth_username" {
+  description = "SMTP authentication username"
+  type        = string
+}
+
+variable "smtp_auth_password" {
+  description = "SMTP authentication password or app password"
+  type        = string
+  sensitive   = true
+}
