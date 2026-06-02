@@ -207,10 +207,15 @@ resource "docker_container" "grafana" {
   }
 }
 
-#  Alertmanager config (generated from template)
+# Alertmanager config (generated from template)
 resource "local_file" "alertmanager_config" {
-  content  = templatefile("${local.base_path}/alertmanager/alertmanager.yml.tpl", {
-    SLACK_WEBHOOK_URL = var.slack_webhook_url
+  content = templatefile("${local.base_path}/alertmanager/alertmanager.yml.tpl", {
+    SLACK_WEBHOOK_URL  = var.slack_webhook_url
+    SMTP_HOST          = var.smtp_host
+    SMTP_PORT          = var.smtp_port
+    SMTP_FROM          = var.smtp_from
+    SMTP_AUTH_USERNAME = var.smtp_auth_username
+    SMTP_AUTH_PASSWORD = var.smtp_auth_password
   })
   filename = "${local.base_path}/alertmanager/alertmanager.yml"
 }
@@ -335,7 +340,7 @@ resource "docker_container" "github_actions_exporter" {
   ]
 }
 
-#  OpenTelemetry Collector
+# OpenTelemetry Collector
 resource "docker_container" "otel_collector" {
   name    = "otel-collector"
   image   = "otel/opentelemetry-collector-contrib:latest"

@@ -10,6 +10,7 @@ groups:
           summary: "High CPU usage on {{ $labels.instance }}"
           description: "The instance {{ $labels.instance }} has a CPU usage above 80% for more than 5 minutes."
           value: "{{ $value | printf \"%.1f\" }}%"
+          dashboard_url: "http://grafana:3000/d/000000012/node-exporter-dashboard?var-instance={{ $labels.instance }}"
           runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/high-cpu.md"
 
       - alert: CPUUsageCritical
@@ -80,7 +81,6 @@ groups:
         annotations:
           summary: "Endpoint {{ $labels.instance }} is down"
           description: "The blackbox exporter has detected that the endpoint {{ $labels.instance }} is not responding to HTTP probes for more than 2 minutes."
-          value: "{{ $value | printf \"%.1f\" }}%"
-          dashboard_url: "http://grafana:3000/d/blackbox"
+          value: "probe_success = {{ $value }}"
+          dashboard_url: "http://grafana:3000/d/000000012/node-exporter-dashboard?var-instance={{ $labels.instance }}"
           runbook_url: "https://github.com/carvanino/observability-platform/blob/main/runbooks/server-down.md"
-        
